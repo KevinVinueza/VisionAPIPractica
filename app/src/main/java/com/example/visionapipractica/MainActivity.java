@@ -3,6 +3,11 @@ package com.example.visionapipractica;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -31,6 +36,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     Vision vision;
+    ImageView imagen;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         vision = visionBuilder.build();
     }
     public Image getImageToProcess(){
-        ImageView imagen = (ImageView)findViewById(R.id.imgImgToProcess);
+        imagen = (ImageView)findViewById(R.id.imgImgToProcess);
         BitmapDrawable drawable = (BitmapDrawable) imagen.getDrawable();
         Bitmap bitmap = drawable.getBitmap();
 
@@ -73,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         return batchRequest;
     }
 
-  
+
     public void ProcesarTexto(View View){
         AsyncTask.execute(new Runnable() {
             @Override
@@ -105,14 +111,34 @@ public class MainActivity extends AppCompatActivity {
                     int numberOfFaces = faces.size();
                     String likelihoods = "";
 
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inMutable =true;
+                    Bitmap mybit= BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.familia,options);
+                    Paint dib = new Paint();
+                    dib.setStrokeWidth(5);
+                    dib.setColor(Color.RED);
+                    dib.setStyle(Paint.Style.STROKE);
+
+                    Bitmap bt = Bitmap.createBitmap(mybit.getWidth(), mybit.getHeight(), Bitmap.Config.RGB_565);
+                    final Canvas dcanvas = new Canvas(bt);
+                    dcanvas.drawBitmap(mybit, 0, 0, null);
+
                     for(int i=0; i<numberOfFaces; i++){
                         likelihoods += "\n Rostro " + i + "  "  + faces.get(i).getJoyLikelihood();
-                        List<Landmark> puntos = faces.get(i).getLandmarks();
+                       List<Landmark> puntos = faces.get(i).getLandmarks();
+                        for (int j=0; j< puntos.size()-2; j++){
+                        float x = faces.get(i).getLandmarks().get(j).getPosition().getX();
+                        float y = faces.get(i).getLandmarks().get(j).getPosition().getY();
+                            float x1 = faces.get(i).getLandmarks().get(j+1).getPosition().getX();
+                            float y1 = faces.get(i).getLandmarks().get(j+1).getPosition().getY();
+                            dcanvas.drawRoundRect(new RectF(x,y,x1,y1),2,2,dib);
 
+                        }
 
 
                     }
 
+                    imagen.setImageDrawable(new BitmapDrawable(getResources(), bt));
 
 
                     final String message =   "Esta imagen tiene " + numberOfFaces + " rostros " + likelihoods;
